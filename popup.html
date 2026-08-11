@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANTI PHISHING WEB EXTENSION</title>
+  <style>
+    /* reset & tokens */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #161922;
+      --surface2:    #1e2330;
+      --border:      #2a3045;
+      --text:        #e2e8f0;
+      --muted:       #64748b;
+      --safe:        #22c55e;
+      --safe-bg:     rgba(34,197,94,0.1);
+      --warn:        #f59e0b;
+      --warn-bg:     rgba(245,158,11,0.1);
+      --danger:      #ef4444;
+      --danger-bg:   rgba(239,68,68,0.1);
+      --low:         #3b82f6;
+      --low-bg:      rgba(59,130,246,0.1);
+      --accent:      #6366f1;
+      --radius:      8px;
+      --font:        'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      width: 380px;
+      min-height: 200px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .logo {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .header-text h1 { font-size: 14px; font-weight: 700; letter-spacing: .3px; }
+    .header-text p  { font-size: 11px; color: var(--muted); }
+    .refresh-btn {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 5px 9px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background .15s;
+    }
+    .refresh-btn:hover { background: var(--border); }
+
+    /* verdict banner */
+    .verdict-banner {
+      margin: 14px 14px 0;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .verdict-banner.safe    { background: var(--safe-bg);   border: 1px solid var(--safe);   }
+    .verdict-banner.suspicious { background: var(--warn-bg); border: 1px solid var(--warn);  }
+    .verdict-banner.dangerous  { background: var(--danger-bg); border: 1px solid var(--danger); }
+
+    .verdict-icon { font-size: 28px; flex-shrink: 0; }
+    .verdict-label { font-size: 17px; font-weight: 700; }
+    .verdict-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    /* score ring */
+    .score-ring {
+      margin-left: auto;
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+      flex-shrink: 0;
+      border: 3px solid;
+    }
+    .safe    .score-ring { border-color: var(--safe);   color: var(--safe);   }
+    .suspicious .score-ring { border-color: var(--warn);   color: var(--warn);   }
+    .dangerous  .score-ring { border-color: var(--danger); color: var(--danger); }
+
+    /* domain info */
+    .domain-bar {
+      margin: 10px 14px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+    .domain-bar .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 3px 0;
+    }
+    .domain-bar .key { color: var(--muted); font-size: 11px; }
+    .domain-bar .val { font-size: 11px; font-weight: 500; word-break: break-all; text-align: right; max-width: 220px; }
+    .trusted-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--safe-bg); color: var(--safe);
+      border: 1px solid var(--safe); border-radius: 4px;
+      padding: 1px 6px; font-size: 10px; font-weight: 600;
+    }
+    .unknown-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--warn-bg); color: var(--warn);
+      border: 1px solid var(--warn); border-radius: 4px;
+      padding: 1px 6px; font-size: 10px; font-weight: 600;
+    }
+
+    /* section tabs */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin: 12px 14px 0;
+    }
+    .tab {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all .15s;
+      letter-spacing: .2px;
+    }
+    .tab:hover { background: var(--surface2); color: var(--text); }
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* findings list */
+    .findings-panel {
+      margin: 10px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .findings-panel::-webkit-scrollbar { width: 4px; }
+    .findings-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .finding-card {
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+      border: 1px solid;
+    }
+    .finding-card.high    { background: var(--danger-bg); border-color: rgba(239,68,68,.3); }
+    .finding-card.medium  { background: var(--warn-bg);   border-color: rgba(245,158,11,.3); }
+    .finding-card.low     { background: var(--low-bg);    border-color: rgba(59,130,246,.3); }
+    .finding-card.error   { background: var(--surface2);  border-color: var(--border); }
+    .finding-icon { flex-shrink: 0; font-size: 13px; margin-top: 1px; }
+    .finding-msg  { line-height: 1.4; color: var(--text); }
+    .sev-pill {
+      display: inline-block;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+    .sev-high   { background: rgba(239,68,68,.2); color: #ef4444; }
+    .sev-medium { background: rgba(245,158,11,.2); color: #f59e0b; }
+    .sev-low    { background: rgba(59,130,246,.2); color: #3b82f6; }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .empty-state .big { font-size: 26px; margin-bottom: 6px; }
+
+    /* forms tab */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 6px;
+    }
+    .form-card h3 { font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+    .form-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+    .form-row .fk { color: var(--muted); }
+    .form-row .fv { font-weight: 500; word-break: break-all; max-width: 220px; text-align: right; }
+    .form-issues { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+    .issue-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--danger-bg); color: var(--danger);
+      border-radius: 4px; padding: 2px 7px; font-size: 10px;
+    }
+
+    /* loading */
+    .loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 20px; gap: 12px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: var(--muted); font-size: 12px; }
+
+    /* error */
+    .error-state {
+      padding: 30px 20px; text-align: center; color: var(--muted); font-size: 12px;
+    }
+    .error-state .big { font-size: 28px; margin-bottom: 8px; }
+
+    /*  footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- header -->
+  <div class="header">
+    <div class="logo">🛡</div>
+    <div class="header-text">
+      <h1>PhishExt</h1>
+      <p>Page legitimacy analyzer</p>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" title="Re-analyze page">↻ Scan</button>
+  </div>
+
+  <!-- dynamic content -->
+  <div id="root">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Analyzing page…</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="footer-url" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <span id="footer-time"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
