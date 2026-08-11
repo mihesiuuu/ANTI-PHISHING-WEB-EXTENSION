@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "ANTI PHISHING WEB EXTENSION",
+  "version": "1.0.0",
+  "description": "Analyzes web pages for phishing indicators: suspicious URLs, typosquatting, risky login forms, and credential theft.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
